@@ -35,7 +35,7 @@ def _parse_response(raw: str) -> dict:
 def chat(history: list[dict], user_message: str) -> tuple[dict, list[dict]]:
     updated = history + [{"role": "user", "content": user_message}]
     response = _get_client().chat.completions.create(
-        model="llama-3.1-8b-instant",
+        model="llama-3.3-70b-versatile",
         max_tokens=512,
         messages=[{"role": "system", "content": SYSTEM_PROMPT}] + updated,
     )
