@@ -5,6 +5,7 @@ from prompt import SYSTEM_PROMPT
 
 _client = None
 
+
 def _get_client():
     global _client
     if _client is None:
@@ -14,6 +15,7 @@ def _get_client():
         _client = Groq(api_key=os.environ["GROQ_API_KEY"])
     return _client
 
+
 def _parse_response(raw: str) -> dict:
     cleaned = re.sub(r"```(?:json)?|```", "", raw).strip()
     try:
@@ -21,7 +23,7 @@ def _parse_response(raw: str) -> dict:
     except json.JSONDecodeError:
         return {
             "status": "asking",
-            "question": cleaned or "क्या आप अपनी समस्या फिर से बता सकते हैं?",
+            "question": cleaned or "Could you please describe your problem again?",
             "diagnosis": None,
             "advice": None,
         }
@@ -32,12 +34,18 @@ def _parse_response(raw: str) -> dict:
         "advice": data.get("advice") or None,
     }
 
-def chat(history: list[dict], user_message: str) -> tuple[dict, list[dict]]:
+
+def chat(history: list[dict], user_message: str, location_context: str = "") -> tuple[dict, list[dict]]:
     updated = history + [{"role": "user", "content": user_message}]
+
+    system = SYSTEM_PROMPT
+    if location_context:
+        system = SYSTEM_PROMPT + "\n\nLOCATION CONTEXT:\n" + location_context
+
     response = _get_client().chat.completions.create(
         model="llama-3.3-70b-versatile",
         max_tokens=512,
-        messages=[{"role": "system", "content": SYSTEM_PROMPT}] + updated,
+        messages=[{"role": "system", "content": system}] + updated,
     )
     raw = response.choices[0].message.content
     result = _parse_response(raw)
